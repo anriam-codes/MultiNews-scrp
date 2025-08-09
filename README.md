@@ -1,2 +1,2 @@
-# MultiNews-scrp
+# Varthalu
 News Scrapper

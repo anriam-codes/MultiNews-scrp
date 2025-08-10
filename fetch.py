@@ -1,18 +1,10 @@
-import requests
-from selenium import webdriver
-from bs4 import BeautifulSoup
 import time
+import requests
 from datetime import datetime
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from urllib.parse import urljoin
+from bs4 import BeautifulSoup
+from selenium import webdriver
 
 def fetch_ndtv():
-    from bs4 import BeautifulSoup
-    from selenium import webdriver
-    import time
-
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     driver = webdriver.Chrome(options=options)
@@ -22,7 +14,6 @@ def fetch_ndtv():
     driver.quit()
 
     articles = []
-
     ul_tag = soup.find("ul", class_="NwsLstPg_ul")
     if not ul_tag:
         return articles
@@ -33,13 +24,11 @@ def fetch_ndtv():
         try:
             title_tag = li.find("a", class_="NwsLstPg_ttl-lnk")
             if not title_tag:
-                print("Skipping li: no title tag")
                 continue
 
             title = title_tag.get_text(strip=True)
             href = title_tag.get("href", "")
             if not href:
-                print(f"Skipping li: no href for title '{title}'")
                 continue
 
             url = href if href.startswith("http") else "https://www.ndtv.com" + href
@@ -53,23 +42,31 @@ def fetch_ndtv():
             articles.append({
                 "title": title,
                 "url": url,
-                "source/post by": source,
+                "source": source,
                 "published_at": published_at
             })
 
-        except Exception as e:
-            print(f"Error processing <li>: {e}")
+        except Exception:
             continue
 
     return articles
 
 
-def fetch_hindustan_times():
+def fetch_ht():
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     driver = webdriver.Chrome(options=options)
-    driver.get("https://www.hindustantimes.com/trending")
-    time.sleep(2)
+
+    driver.set_page_load_timeout(30)
+
+    try:
+        driver.get("https://www.hindustantimes.com/trending")
+        time.sleep(2)
+    except Exception as e:
+        print(f"[fetch_ht] Failed to load HT: {e}")
+        driver.quit()
+        return []
+
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
 
@@ -96,14 +93,13 @@ def fetch_hindustan_times():
                     "source": source,
                     "published_at": date
                 })
-        except Exception as e:
-            print(f"Error: {e}")
+        except Exception:
             continue
 
     return articles
 
 
-def fetch_inshorts():
+def fetch_toi():
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     driver = webdriver.Chrome(options=options)
@@ -121,12 +117,12 @@ def fetch_inshorts():
             author = card.find("span", class_="author").get_text(strip=True)
             raw_date = card.find("span", class_="date").get_text(strip=True)
             parsed_date = datetime.strptime(raw_date, "%A %d %B, %Y")
-            te = parsed_date.strftime("%d %b %Y").lstrip("0")
+            formatted_date = parsed_date.strftime("%Y-%m-%d")
             articles.append({
                 "title": title,
                 "url": url,
                 "source": author,
-                "published_at": te
+                "published_at": formatted_date
             })
         except:
             continue

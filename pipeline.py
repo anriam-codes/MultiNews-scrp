@@ -1,14 +1,19 @@
-from fetch import fetch_ndtv, fetch_hindustan_times, fetch_inshorts
-import json
+from fetch import fetch_ndtv, fetch_ht, fetch_toi
+from transform import normalize_date
 
 def run_pipeline():
     data = {
         "ndtv": fetch_ndtv(),
-        "hindustantimes": fetch_hindustan_times(),
-        "inshorts": fetch_inshorts()
+        "ht": fetch_ht(),
+        "toi": fetch_toi()
     }
 
-    print(json.dumps(data, indent=2, ensure_ascii=False))
+    for source in data:
+        for article in data[source]:
+            article["published_at"] = normalize_date(article["published_at"])
+
+    return data
 
 if __name__ == "__main__":
-    run_pipeline()
+    from pprint import pprint
+    pprint(run_pipeline())

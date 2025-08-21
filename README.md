@@ -1,2 +1,2 @@
 # Varthalu
-News Scrapper
+Multi News Scrapper
